@@ -156,7 +156,6 @@ class MainWindow(QMainWindow):
         if not self.timer_started:
             self.timer_started=True
             QTimer.singleShot(self.test_duration, self.finished)
-        print("click")
         self.no_clicks+=1
         print(self.no_clicks)
 
