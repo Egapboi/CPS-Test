@@ -11,7 +11,7 @@ A simple Clicks Per Second Tester built with PyQT5.
 
 # Requirements
 
-- >Python 3.8
+- Python >3.8
 - PyQT5
 
 ## Installation
