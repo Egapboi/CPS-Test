@@ -1,4 +1,4 @@
-### CPS Tester
+## CPS Tester
 
 A simple Clicks Per Second Tester built with PyQT5.
 
