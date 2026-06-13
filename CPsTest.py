@@ -176,6 +176,7 @@ class MainWindow(QMainWindow):
     def retry(self):
         self.cps_label.hide()
         self.button_retry.hide()
+        self.cps_label.hide()
         self.no_clicks=0
         self.buttonchoose()
 
