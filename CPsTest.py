@@ -2,6 +2,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt5.QtGui import QIcon, QFont, QPixmap
 from PyQt5.QtCore import Qt, QTimer
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -161,9 +163,10 @@ class MainWindow(QMainWindow):
 
     def finished(self):
         self.button.hide()
-        cps=self.no_clicks/round((self.test_duration/1000),2)
-        print(cps)
-        self.cps_label=QLabel(f"Your CPS is {cps}", self)
+        if hasattr(self, "cps_label"):
+            self.cps_label.deleteLater()
+        cps = self.no_clicks / (self.test_duration / 1000)
+        self.cps_label = QLabel(f"Your CPS is {cps:.2f}", self)
         self.cps_label.setFont(QFont("Mono", 40))
         self.cps_label.setStyleSheet("color: #87a0c7;"
         "background-color: #202938;"
@@ -174,7 +177,7 @@ class MainWindow(QMainWindow):
 
 
     def retry(self):
-        self.cps_label.hide()
+        self.cps_label.deleteLater()
         self.button_retry.hide()
         self.no_clicks=0
         self.buttonchoose()
