@@ -1,191 +1,184 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
-from PyQt5.QtGui import QIcon, QFont, QPixmap
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QLabel, QInputDialog
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QTimer
+
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("CPS Test")
-        self.setGeometry(0, 0, 1200, 600)
+        self.setGeometry(100, 100, 1200, 600) # Added window starting position (100, 100)
+        self.setStyleSheet("background-color: #202938;") # Set main background color
+        
+        # Initialize variables
+        self.test_duration = 5000 # Default 5 seconds
+        self.no_clicks = 0
+        self.timer_started = False
+        self.time_buttons = []
+        
         self.initUI()
     
     def initUI(self):
-        self.label=QLabel("Welcome to CP", self)
-        self.label.setGeometry(((self.width()-580)//2), ((self.height()-50)//2)-50, 200, 50)
+        self.label = QLabel("Welcome to CP", self)
         self.label.setFont(QFont("Mono", 40))
-        self.label.setStyleSheet("color: #87a0c7;"
-        "background-color: #202938;"
-        "font-weight: bold;")
+        self.label.setStyleSheet("color: #87a0c7; font-weight: bold;")
         self.label.adjustSize()
-        QTimer.singleShot(2500, self.change_label)
-
+        self.label.move((self.width() - self.label.width()) // 2, (self.height() - self.label.height()) // 2)
+        self.label.show()
+        
+        QTimer.singleShot(1500, self.change_label)
     
     def change_label(self):
         self.label.setText("Welcome to CPS Test")
         self.label.adjustSize()
+        self.label.move((self.width() - self.label.width()) // 2, (self.height() - self.label.height()) // 2)
+        
         QTimer.singleShot(1000, self.buttonchoose)
 
     def buttonchoose(self):
+        # Hide the splash screen label
         self.label.hide()
-        self.label_select=QLabel("Select time", self)
-        self.label_select.setGeometry(5, 5, 10, 10)
-        self.setFont(QFont("Mono", 25))
-        self.label_select.setStyleSheet("color: #87a0c7;"
-        "background-color: #202938;"
-        "font-weight: bold;")
+        
+        # Heading for selection
+        self.label_select = QLabel("Select Time Duration", self)
+        self.label_select.setFont(QFont("Mono", 30))
+        self.label_select.setStyleSheet("color: #87a0c7; font-weight: bold;")
         self.label_select.adjustSize()
+        self.label_select.move((self.width() - self.label_select.width()) // 2, 80)
         self.label_select.show()
 
-        self.button_1sec=QPushButton("1 second", self)
-        self.button_1sec.setGeometry(5, 60, 300, 40)
-        self.button_2sec=QPushButton("2 second", self)
-        self.button_2sec.setGeometry(5, 100, 300, 40)
-        self.button_3sec=QPushButton("3 second", self)
-        self.button_3sec.setGeometry(5, 140, 300, 40)
-        self.button_5sec=QPushButton("5 second", self)
-        self.button_5sec.setGeometry(5, 180, 300, 40)
-        self.button_10sec=QPushButton("10 second", self)
-        self.button_10sec.setGeometry(5, 220, 300, 40)
-        self.button_30sec=QPushButton("30 second", self)
-        self.button_30sec.setGeometry(5, 260, 300, 40)
-        self.button_2m=QPushButton("Marathon (2 minute)", self)
-        self.button_2m.setGeometry(5, 300, 500, 40)
+        # Target intervals in seconds
+        intervals = [
+            ("1 Sec", 1000), ("2 Sec", 2000), ("3 Sec", 3000), 
+            ("5 Sec", 5000), ("10 Sec", 10000), ("30 Sec", 30000), 
+            ("2 Min", 120000), ("Custom", -1)
+        ]
+        
+        # Clear any existing buttons just in case
+        self.time_buttons.clear()
+        
+        # Layout metrics for hardcoded placement
+        start_x = (self.width() - (4 * 160 + 3 * 20)) // 2 # Center the 4x2 grid of buttons
+        start_y = 200
+        
+        for i, (text, ms) in enumerate(intervals):
+            btn = QPushButton(text, self)
+            btn.setFont(QFont("Mono", 16))
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #2e3b4e; 
+                    color: #87a0c7; 
+                    border: 2px solid #87a0c7; 
+                    border-radius: 8px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #3d4f68;
+                }
+            """)
+            btn.resize(160, 60)
+            
+            # 4 buttons per row grid calculation
+            row = i // 4
+            col = i % 4
+            btn.move(start_x + col * 180, start_y + row * 80)
+            
+            # Use lambda default arguments to capture the specific loop variables correctly
+            btn.clicked.connect(lambda checked, duration=ms: self.set_duration_and_start(duration))
+            btn.show()
+            self.time_buttons.append(btn)
 
-        self.button_1sec.show()
-        self.button_2sec.show()
-        self.button_3sec.show()
-        self.button_5sec.show()
-        self.button_10sec.show()
-        self.button_30sec.show()
-        self.button_2m.show()
+    def set_duration_and_start(self, duration):
+        if duration == -1:
+            # Custom time input dialog
+            seconds, ok = QInputDialog.getInt(self, "Custom Time", "Enter duration in seconds:", value=5, min=1, max=3600)
+            if ok:
+                self.test_duration = seconds * 1000
+            else:
+                return # If they cancel, don't clear the menu
+        else:
+            self.test_duration = duration
+            
+        # Clean up choice screen UI elements before entering clicking screen
+        self.label_select.hide()
+        for btn in self.time_buttons:
+            btn.deleteLater()
+        self.time_buttons.clear()
+        
+        # Launch clicking interface
+        self.buttonUI()
 
-        self.button_1sec.clicked.connect(self.button_1sec_on_click)
-        self.button_2sec.clicked.connect(self.button_2sec_on_click)
-        self.button_3sec.clicked.connect(self.button_3sec_on_click)
-        self.button_5sec.clicked.connect(self.button_5sec_on_click)
-        self.button_10sec.clicked.connect(self.button_10sec_on_click)
-        self.button_30sec.clicked.connect(self.button_30sec_on_click)
-        self.button_2m.clicked.connect(self.button_2m_on_click)
-
-    def button_1sec_on_click(self):
-        QTimer.singleShot(1000,self.buttonUI_1sec)
-    def button_2sec_on_click(self):
-        QTimer.singleShot(1000,self.buttonUI_2sec)
-    def button_3sec_on_click(self):
-        QTimer.singleShot(1000,self.buttonUI_3sec)
-    def button_5sec_on_click(self):
-        QTimer.singleShot(1000,self.buttonUI_5sec)
-    def button_10sec_on_click(self):
-        QTimer.singleShot(1000,self.buttonUI_10sec)
-    def button_30sec_on_click(self):
-        QTimer.singleShot(1000,self.buttonUI_30sec)
-    def button_2m_on_click(self):
-        QTimer.singleShot(1000,self.buttonUI_2m)
-
-    def buttonUI_1sec(self):
-        self.label.hide()
-        self.button=QPushButton("Click me baby", self)
-        self.button.setGeometry((self.width()-500)//2+200, (self.height()-500)//2, 500, 500)
-        self.button.clicked.connect(self.on_click)
-        self.no_clicks=0
-        self.timer_started=False
-        self.button.show()
-        self.test_duration=1000
-
-    def buttonUI_2sec(self):
-        self.label.hide()
-        self.button=QPushButton("Click me baby", self)
-        self.button.setGeometry((self.width()-500)//2+200, (self.height()-500)//2, 500, 500)
-        self.button.clicked.connect(self.on_click)
-        self.no_clicks=0
-        self.timer_started=False
-        self.button.show()
-        self.test_duration=2000
-
-    def buttonUI_3sec(self):
-        self.label.hide()
-        self.button=QPushButton("Click me baby", self)
-        self.button.setGeometry((self.width()-500)//2+200, (self.height()-500)//2, 500, 500)
-        self.button.clicked.connect(self.on_click)
-        self.no_clicks=0
-        self.timer_started=False
-        self.button.show()
-        self.test_duration=3000
-    
-    def buttonUI_5sec(self):
-        self.label.hide()
-        self.button=QPushButton("Click me baby", self)
-        self.button.setGeometry((self.width()-500)//2+200, (self.height()-500)//2, 500, 500)
-        self.button.clicked.connect(self.on_click)
-        self.no_clicks=0
-        self.timer_started=False
-        self.button.show()
-        self.test_duration=5000
-    
-    def buttonUI_10sec(self):
-        self.label.hide()
-        self.button=QPushButton("Click me baby", self)
-        self.button.setGeometry((self.width()-500)//2+200, (self.height()-500)//2, 500, 500)
-        self.button.clicked.connect(self.on_click)
-        self.no_clicks=0
-        self.timer_started=False
-        self.button.show()
-        self.test_duration=10000
-    
-    def buttonUI_30sec(self):
-        self.label.hide()
-        self.button=QPushButton("Click me baby", self)
-        self.button.setGeometry((self.width()-500)//2+200, (self.height()-500)//2, 500, 500)
-        self.button.clicked.connect(self.on_click)
-        self.no_clicks=0
-        self.timer_started=False
-        self.button.show()
-        self.test_duration=30000
-    
-    def buttonUI_2m(self):
-        self.label.hide()
-        self.button=QPushButton("Click me baby", self)
-        self.button.setGeometry((self.width()-500)//2+200, (self.height()-500)//2, 500, 500)
-        self.button.clicked.connect(self.on_click)
-        self.no_clicks=0
-        self.timer_started=False
-        self.button.show()
-        self.test_duration=120000
+    def buttonUI(self):
+        # Reset tracker metrics
+        self.no_clicks = 0
+        self.timer_started = False
+        
+        # Large click target button
+        self.click_btn = QPushButton("CLICK HERE TO START", self)
+        self.click_btn.setFont(QFont("Mono", 28))
+        self.click_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2e3b4e;
+                color: #87a0c7;
+                border: 4px dashed #87a0c7;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3d4f68;
+            }
+        """)
+        self.click_btn.setGeometry(100, 100, 1000, 400)
+        self.click_btn.clicked.connect(self.on_click)
+        self.click_btn.show()
 
     def on_click(self):
         if not self.timer_started:
-            self.timer_started=True
+            self.timer_started = True
+            self.click_btn.setText("CLICK!!!")
             QTimer.singleShot(self.test_duration, self.finished)
-        self.no_clicks+=1
-        print(self.no_clicks)
+        self.no_clicks += 1
 
     def finished(self):
-        self.button.hide()
+        self.click_btn.hide()
+        self.click_btn.deleteLater()
+        
+        # Safeguard clean up for preexisting result label if playing again
         if hasattr(self, "cps_label"):
             self.cps_label.deleteLater()
+            
         cps = self.no_clicks / (self.test_duration / 1000)
-        self.cps_label = QLabel(f"Your CPS is {cps:.2f}", self)
+        
+        self.cps_label = QLabel(f"Your CPS is {cps:.2f}\nTotal Clicks: {self.no_clicks}", self)
+        self.cps_label.setAlignment(Qt.AlignCenter)
         self.cps_label.setFont(QFont("Mono", 40))
-        self.cps_label.setStyleSheet("color: #87a0c7;"
-        "background-color: #202938;"
-        "font-weight: bold;")
+        self.cps_label.setStyleSheet("color: #87a0c7; font-weight: bold;")
         self.cps_label.adjustSize()
-        self.cps_label.move((self.width()-self.cps_label.width())//2+200, (self.height()-self.cps_label.height())//2)
+        self.cps_label.move((self.width() - self.cps_label.width()) // 2, (self.height() - self.cps_label.height()) // 2)
         self.cps_label.show()
 
+        # Quick restart option button
+        self.restart_btn = QPushButton("Try Again", self)
+        self.restart_btn.setFont(QFont("Mono", 16))
+        self.restart_btn.setStyleSheet("background-color: #2e3b4e; color: #87a0c7; border: 2px solid #87a0c7;")
+        self.restart_btn.setGeometry((self.width() - 200) // 2, self.height() - 100, 200, 50)
+        self.restart_btn.clicked.connect(self.restart_game)
+        self.restart_btn.show()
 
-    def retry(self):
-        self.cps_label.deleteLater()
-        self.button_retry.hide()
-        self.no_clicks=0
+    def restart_game(self):
+        self.cps_label.hide()
+        self.restart_btn.hide()
+        self.restart_btn.deleteLater()
         self.buttonchoose()
 
 def main():
-    app=QApplication(sys.argv)
+    app = QApplication(sys.argv)
     app.setDesktopFileName("cps_test")
-    window=MainWindow()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-main()
+
+if __name__ == '__main__':
+    main()
