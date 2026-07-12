@@ -10,11 +10,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("CPS Test")
-        self.setGeometry(100, 100, 1200, 600) # Added window starting position (100, 100)
-        self.setStyleSheet("background-color: #202938;") # Set main background color
+        self.setGeometry(100, 100, 1200, 600)
+        self.setStyleSheet("background-color: #202938;") 
         
-        # Initialize variables
-        self.test_duration = 5000 # Default 5 seconds
+        self.test_duration = 5000
         self.no_clicks = 0
         self.timer_started = False
         self.time_buttons = []
@@ -39,10 +38,8 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(1000, self.buttonchoose)
 
     def buttonchoose(self):
-        # Hide the splash screen label
         self.label.hide()
         
-        # Heading for selection
         self.label_select = QLabel("Select Time Duration", self)
         self.label_select.setFont(QFont("Mono", 30))
         self.label_select.setStyleSheet("color: #87a0c7; font-weight: bold;")
@@ -50,17 +47,14 @@ class MainWindow(QMainWindow):
         self.label_select.move((self.width() - self.label_select.width()) // 2, 80)
         self.label_select.show()
 
-        # Target intervals in seconds
         intervals = [
             ("1 Sec", 1000), ("2 Sec", 2000), ("3 Sec", 3000), 
             ("5 Sec", 5000), ("10 Sec", 10000), ("30 Sec", 30000), 
             ("2 Min", 120000), ("Custom", -1)
         ]
         
-        # Clear any existing buttons just in case
         self.time_buttons.clear()
         
-        # Layout metrics for hardcoded placement
         start_x = (self.width() - (4 * 160 + 3 * 20)) // 2 # Center the 4x2 grid of buttons
         start_y = 200
         
@@ -81,42 +75,33 @@ class MainWindow(QMainWindow):
             """)
             btn.resize(160, 60)
             
-            # 4 buttons per row grid calculation
             row = i // 4
             col = i % 4
             btn.move(start_x + col * 180, start_y + row * 80)
-            
-            # Use lambda default arguments to capture the specific loop variables correctly
             btn.clicked.connect(lambda checked, duration=ms: self.set_duration_and_start(duration))
             btn.show()
             self.time_buttons.append(btn)
 
     def set_duration_and_start(self, duration):
         if duration == -1:
-            # Custom time input dialog
             seconds, ok = QInputDialog.getInt(self, "Custom Time", "Enter duration in seconds:", value=5, min=1, max=3600)
             if ok:
                 self.test_duration = seconds * 1000
             else:
-                return # If they cancel, don't clear the menu
+                return
         else:
             self.test_duration = duration
             
-        # Clean up choice screen UI elements before entering clicking screen
         self.label_select.hide()
         for btn in self.time_buttons:
             btn.deleteLater()
         self.time_buttons.clear()
-        
-        # Launch clicking interface
         self.buttonUI()
 
     def buttonUI(self):
-        # Reset tracker metrics
         self.no_clicks = 0
         self.timer_started = False
         
-        # Large click target button
         self.click_btn = QPushButton("CLICK HERE TO START", self)
         self.click_btn.setFont(QFont("Mono", 28))
         self.click_btn.setStyleSheet("""
@@ -144,8 +129,6 @@ class MainWindow(QMainWindow):
     def finished(self):
         self.click_btn.hide()
         self.click_btn.deleteLater()
-        
-        # Safeguard clean up for preexisting result label if playing again
         if hasattr(self, "cps_label"):
             self.cps_label.deleteLater()
             
@@ -158,8 +141,6 @@ class MainWindow(QMainWindow):
         self.cps_label.adjustSize()
         self.cps_label.move((self.width() - self.cps_label.width()) // 2, (self.height() - self.cps_label.height()) // 2)
         self.cps_label.show()
-
-        # Quick restart option button
         self.restart_btn = QPushButton("Try Again", self)
         self.restart_btn.setFont(QFont("Mono", 16))
         self.restart_btn.setStyleSheet("background-color: #2e3b4e; color: #87a0c7; border: 2px solid #87a0c7;")
